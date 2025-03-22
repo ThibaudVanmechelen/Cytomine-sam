@@ -1,1 +1,1 @@
-# Cytomine-sam
+# Cytomine SAM
