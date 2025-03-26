@@ -1,0 +1,5 @@
+outs:
+- md5: 9ea6e537fd7fbb688af0e60a56217456
+  size: 323646373
+  hash: md5
+  path: weights.pt
