@@ -23,7 +23,6 @@ def mask_to_geojson(mask : np.ndarray, offset_x: int = 0, offset_y = 0):
 
             polygons.append(coords)
 
-    
     if not polygons:
         return None
 

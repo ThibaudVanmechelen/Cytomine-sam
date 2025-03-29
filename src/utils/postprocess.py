@@ -43,4 +43,4 @@ def upscale_mask(mask: np.ndarray, init_shape: tuple):
     if init_shape[0] == -1 or init_shape[1] == -1:
         return mask
 
-    return cv2.resize(mask, (init_shape[1], init_shape[0]), interpolation = cv2.INTER_NEAREST)
+    return cv2.resize(mask, (init_shape[1], init_shape[0]), interpolation = cv2.INTER_NEAREST) # cv2.resize takes tuple (width, height)

@@ -9,6 +9,14 @@ from src import __version__
 from sam2 import SAM2ImagePredictor, build_sam2
 from src.config import Settings, get_settings
 from src.api import prediction
+from src.api import storage
+from src.utils.store_utils import get_redis
+from src.store.store import *
+from apscheduler.schedulers.background import BackgroundScheduler
+
+
+scheduler = BackgroundScheduler()
+
 
 def load_predictor(settings: Settings) -> SAM2ImagePredictor:
     sam2_model = build_sam2(settings.config, settings.checkpoint, device = settings.device)
@@ -19,7 +27,15 @@ def load_predictor(settings: Settings) -> SAM2ImagePredictor:
 @asynccontextmanager
 async def lifespan(local_app: FastAPI) -> AsyncGenerator[None, None]:
     local_app.state.predictor = load_predictor(get_settings())
+
+    scheduler.add_job(lambda: cleanup_cached_files(get_redis()), 'interval', minutes = 30)
+    scheduler.start()
+    print("[STARTUP] Predictor loaded and cleanup job scheduled.")
+
     yield
+
+    scheduler.shutdown()
+    print("[SHUTDOWN] Scheduler stopped.")
 
 
 app = FastAPI(
@@ -34,4 +50,5 @@ app = FastAPI(
     },
 )
 
-app.include_router(router = prediction.router, prefix="/api")
+app.include_router(router = prediction.router, prefix = "/api")
+app.include_router(router = storage.router, prefix = "/api")

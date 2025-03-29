@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional, Literal
-
+from fastapi import Request
 
 class GeoJSONPolygon(BaseModel):
     """
@@ -41,7 +41,7 @@ class GeoJsonPoint(BaseModel):
 
 
 class SegmentationFromIdRequest(BaseModel):
-    project_id: int
+    request: Request
     image_id: int
     geometry: GeoJSONPolygon
     points: Optional[List[GeoJsonPoint]] = None # Optional

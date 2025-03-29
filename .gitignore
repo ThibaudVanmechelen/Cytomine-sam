@@ -176,3 +176,5 @@ cython_debug/
 # DVC folders
 weights/*
 !weights/*.dvc
+
+keys.toml
