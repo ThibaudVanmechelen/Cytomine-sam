@@ -173,8 +173,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# DVC folders
-weights/*
-!weights/*.dvc
 
 keys.toml

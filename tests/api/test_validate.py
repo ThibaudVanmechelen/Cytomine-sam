@@ -1,67 +1,110 @@
 import pytest
-from src.api.models.validate import *
+from fastapi import HTTPException
+
+from src.api.models.validate import validate_box_feature, validate_point_feature
 
 
-def test_validate_box_valid():
-    polygon = GeoJSONPolygon([[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]])
+def test_valid_box():
+    feature = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[1, 1], [4, 1], [4, 3], [1, 3], [1, 1]]]
+        }
+    }
 
-    try:
-        validate_box(polygon)
+    assert validate_box_feature(feature) is None
 
-    except HTTPException:
-        pytest.fail("Unexpected HTTPException for valid box")
+def test_box_invalid_type():
+    feature = {"type": "Invalid", "geometry": {}}
+
+    with pytest.raises(HTTPException, match = "Geometry must be a GeoJSON Feature"):
+        validate_box_feature(feature)
+
+def test_box_not_polygon():
+    feature = {"type": "Feature", "geometry": {"type": "Point"}}
+
+    with pytest.raises(HTTPException, match = "Geometry must be a Polygon"):
+        validate_box_feature(feature)
+
+def test_box_missing_coordinates():
+    feature = {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": []}}
+
+    with pytest.raises(HTTPException, match = "Polygon must have coordinates"):
+        validate_box_feature(feature)
+
+def test_box_not_closed():
+    feature = {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[1, 1], [4, 1], [4, 3], [1, 3]]]}}
+
+    with pytest.raises(HTTPException, match = "Box must have 5 coordinates"):
+        validate_box_feature(feature)
+
+def test_box_open_shape():
+    feature = {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[1, 1], [4, 1], [4, 3], [1, 3], [2, 2]]]}}
+
+    with pytest.raises(HTTPException, match = "Box must be closed"):
+        validate_box_feature(feature)
+
+def test_box_not_axis_aligned():
+    feature = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[1, 1], [3, 2], [2, 4], [0, 3], [1, 1]]]
+        }
+    }
+
+    with pytest.raises(HTTPException, match = "Box must be an axis-aligned rectangle"):
+        validate_box_feature(feature)
+
+def test_box_incorrect_rectangle():
+    feature = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[1, 1], [4, 1], [4, 2], [1, 4], [1, 1]]]
+        }
+    }
+
+    with pytest.raises(HTTPException, match = "Box corners do not form a proper rectangle"):
+        validate_box_feature(feature)
 
 
-def test_validate_box_not_closed():
-    polygon = GeoJSONPolygon([[[0, 0], [1, 0], [1, 1], [0, 1], [1, 1]]])
+def test_valid_point():
+    feature = {
+        "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": [1, 2]},
+        "properties": {"label": 1}
+    }
 
-    with pytest.raises(HTTPException) as exc:
-        validate_box(polygon)
+    assert validate_point_feature(feature) is None
 
-    assert "Box must be closed" in str(exc.value.detail)
+def test_point_invalid_type():
+    feature = {"type": "Invalid", "geometry": {}}
 
+    with pytest.raises(HTTPException, match = "Point must be a GeoJSON Feature"):
+        validate_point_feature(feature)
 
-def test_validate_box_wrong_corners():
-    polygon = GeoJSONPolygon([[[0, 0], [2, 0], [2, 2], [1, 1], [0, 0]]])
+def test_point_wrong_geometry():
+    feature = {"type": "Feature", "geometry": {"type": "Polygon"}}
 
-    with pytest.raises(HTTPException) as exc:
-        validate_box(polygon)
+    with pytest.raises(HTTPException, match = "Point geometry must be of type Point"):
+        validate_point_feature(feature)
 
-    assert "Box corners do not form a proper rectangle" in str(exc.value.detail)
+def test_point_wrong_coords():
+    feature = {"type": "Feature", "geometry": {"type": "Point", "coordinates": [1]}, "properties": {"label": 0}}
 
+    with pytest.raises(HTTPException, match = "Point must have exactly 2 coordinates"):
+        validate_point_feature(feature)
 
-def test_validate_box_not_axis_aligned():
-    polygon = GeoJSONPolygon([[[0, 0], [0.5, 0], [0.5, 1], [0, 1], [0, 0]]])
+def test_point_missing_label():
+    feature = {"type": "Feature", "geometry": {"type": "Point", "coordinates": [1, 2]}, "properties": {}}
 
-    with pytest.raises(HTTPException) as exc:
-        validate_box(polygon)
+    with pytest.raises(HTTPException, match = "Point must have a 'label' property"):
+        validate_point_feature(feature)
 
-    assert "Box must be an axis-aligned rectangle" in str(exc.value.detail)
+def test_point_invalid_label():
+    feature = {"type": "Feature", "geometry": {"type": "Point", "coordinates": [1, 2]}, "properties": {"label": 2}}
 
-
-def test_validate_box_wrong_length():
-    polygon = GeoJSONPolygon([[[0, 0], [1, 0], [1, 1], [0, 1]]])
-
-    with pytest.raises(HTTPException) as exc:
-        validate_box(polygon)
-    
-    assert "Box must have 5 coordinates" in str(exc.value.detail)
-
-
-def test_validate_coordinates_valid():
-    point = GeoJsonPoint([10, 20], 1)
-
-    try:
-        validate_coordinates(point)
-
-    except HTTPException:
-        pytest.fail("Unexpected HTTPException for valid point")
-
-
-def test_validate_coordinates_invalid():
-    point = GeoJsonPoint([10], 1)
-
-    with pytest.raises(HTTPException) as exc:
-        validate_coordinates(point)
-
-    assert "Point must have 2 coordinates" in str(exc.value.detail)
+    with pytest.raises(HTTPException, match = "Point must have a 'label' property with value 0 or 1"):
+        validate_point_feature(feature)

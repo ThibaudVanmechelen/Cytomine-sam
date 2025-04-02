@@ -1,47 +1,62 @@
 import numpy as np
-
-from typing import List
-from api.models.model import GeoJSONPoint, GeoJSONPolygon
+from typing import List, Dict, Any
 
 
-def format_point_prompt(points_data: List[GeoJSONPoint]):
+def format_point_prompt(points_data: List[Dict[str, Any]]):
     """
     Function to format the point prompts from the GeoJSON format to the SAM format.
 
     Args:
-        (points_data: List[GeoJSONPoint]): the list of point prompts.
+        (points_data: List[Dict[str, Any]]): the list of point prompts.
 
     Returns:
-        (np.ndarray): Returns the formatted point prompt coordinates.
-        (np.ndarray): Returns the formatted point prompt labels.
+        Tuple of:
+            - (np.ndarray): the formatted point prompt coordinates (Shape: Nx2).
+            - (np.ndarray): the formatted point prompt labels (Shape: N).
     """
     if not points_data:
         return None, None
 
-    point_coords = np.array([pt.coordinates for pt in points_data], dtype = np.int32)
-    point_labels = np.array([pt.properties.label for pt in points_data], dtype = np.int32)
+    try:
+        point_coords = np.array(
+            [list(map(int, pt["geometry"]["coordinates"])) for pt in points_data], 
+            dtype = np.int32
+        )
 
-    return point_coords, point_labels
+        point_labels = np.array(
+            [int(pt["properties"]["label"]) for pt in points_data],
+            dtype = np.int32
+        )
+
+        return point_coords, point_labels
+    
+    except Exception as e:
+        raise ValueError(f"Invalid point data format: {e}")
 
 
-def format_box_prompt(box: GeoJSONPolygon):
+def format_box_prompt(box: Dict[str, Any]):
     """
     Function to format the box prompt from the GeoJSON format to the SAM format.
 
     Args:
-        (box: GeoJSONPolygon): the box prompt.
+        (box: Dict[str, Any]): the box prompt.
 
     Returns:
-        (np.ndarray): Returns the formatted box prompt.
+        (np.ndarray): Returns the formatted box prompt in format [x_min, y_min, x_max, y_max] (int32).
     """
-    if not box.coordinates or len(box.coordinates[0]) != 5:
-        return None
+    try:
+        coordinates = box["geometry"]["coordinates"]
+        if not coordinates or len(coordinates[0]) != 5:
+            return None
 
-    coords = np.array(box.coordinates[0][:4], dtype = np.int32)
+        coords = np.array(coordinates[0][:4], dtype = np.int32) # to ignore the closing point
 
-    x_min = np.min(coords[:, 0])
-    y_min = np.min(coords[:, 1])
-    x_max = np.max(coords[:, 0])
-    y_max = np.max(coords[:, 1])
+        x_min = np.min(coords[:, 0])
+        y_min = np.min(coords[:, 1])
+        x_max = np.max(coords[:, 0])
+        y_max = np.max(coords[:, 1])
 
-    return np.array([x_min, y_min, x_max, y_max], dtype = np.int32)
+        return np.array([x_min, y_min, x_max, y_max], dtype = np.int32)
+
+    except Exception as e:
+        raise ValueError(f"Invalid box format: {e}")

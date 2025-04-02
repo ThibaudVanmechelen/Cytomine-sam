@@ -1,37 +1,68 @@
 import pytest
 import numpy as np
 
-from src.api.models.model import *
-from src.utils.format_prompt import *
+from src.utils.format_prompt import format_box_prompt, format_point_prompt
 
-@pytest.mark.parametrize("points_data, expected_coords, expected_labels", [
-    ([GeoJsonPoint([1, 2], 0), GeoJsonPoint([3, 4], 1)], [[1, 2], [3, 4]], [0, 1]),
-    ([GeoJsonPoint([0, 0], 5)], [[0, 0]], [5]),
-    ([], None, None),
-])
 
-def test_format_point_prompt(points_data, expected_coords, expected_labels):
-    coords, labels = format_point_prompt(points_data)
+def test_format_point_prompt_valid():
+    points = [
+        {"geometry": {"coordinates": [5, 10]}, "properties": {"label": 1}},
+        {"geometry": {"coordinates": [20, 30]}, "properties": {"label": 0}}
+    ]
 
-    if coords is None and labels is None:
-        assert expected_coords is None and expected_labels is None
+    coords, labels = format_point_prompt(points)
 
-    else:
-        np.testing.assert_array_equal(coords, np.array(expected_coords, dtype = np.float32))
-        np.testing.assert_array_equal(labels, np.array(expected_labels, dtype = np.int32))
+    expected_coords = np.array([[5, 10], [20, 30]], dtype = np.int32)
+    expected_labels = np.array([1, 0], dtype = np.int32)
 
-@pytest.mark.parametrize("polygon, expected", [
-    (GeoJSONPolygon([[[1, 2], [3, 2], [3, 4], [1, 4], [1, 2]]]), [1, 2, 3, 4]),
-    (GeoJSONPolygon([[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]]), [0, 0, 0, 0]),
-    (GeoJSONPolygon([]), None),
-    (GeoJSONPolygon([[[1, 2], [3, 2], [3, 4]]]), None),
-])
+    np.testing.assert_array_equal(coords, expected_coords)
+    np.testing.assert_array_equal(labels, expected_labels)
 
-def test_format_box_prompt(polygon, expected):
-    result = format_box_prompt(polygon)
 
-    if expected is None:
-        assert result is None
+def test_format_point_prompt_empty():
+    coords, labels = format_point_prompt([])
 
-    else:
-        np.testing.assert_array_almost_equal(result, np.array(expected, dtype = np.float32))
+    assert coords is None
+    assert labels is None
+
+
+def test_format_point_prompt_invalid():
+    with pytest.raises(ValueError, match = "Invalid point data format"):
+        format_point_prompt([
+            {"geometry": {"coordinates": ["a", "b"]}, "properties": {"label": "x"}}
+        ])
+
+
+def test_format_box_prompt_valid():
+    box = {
+        "geometry": {
+            "coordinates": [
+                [[10, 10], [10, 20], [20, 20], [20, 10], [10, 10]]
+            ]
+        }
+    }
+    expected = np.array([10, 10, 20, 20], dtype = np.int32)
+    result = format_box_prompt(box)
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_format_box_prompt_missing_coords():
+    box = {"geometry": {"coordinates": []}}
+    assert format_box_prompt(box) is None
+
+
+def test_format_box_prompt_incomplete_box():
+    box = {
+        "geometry": {
+            "coordinates": [
+                [[10, 10], [20, 20]]
+            ]
+        }
+    }
+
+    assert format_box_prompt(box) is None
+
+
+def test_format_box_prompt_invalid_structure():
+    with pytest.raises(ValueError, match = "Invalid box format"):
+        format_box_prompt({"geometry": {}})

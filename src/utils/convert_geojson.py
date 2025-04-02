@@ -1,19 +1,21 @@
 import cv2
+import geojson
 import numpy as np
 
 
-def mask_to_geojson(mask: np.ndarray, offset_x: int = 0, offset_y: int = 0):
+def mask_to_geojson(mask: np.ndarray, image_height: int, offset_x: int, offset_y: int):
     """
     Function to convert the mask to a GeoJSON taking into account the offset due
     to the manipulation of WSIs.
 
     Args:
         (mask: np.ndarray): the mask.
+        (image_height: int): the height of the image.
         (offset_x: int): the offset along the x-axis.
         (offset_y: int): the offset along the y-axis.
 
     Returns:
-        (dict): Returns the structure as a GeoJSON
+        (geojson.Feature, or None): Returns the structure as a GeoJSON
     """
     mask = (mask > 0).astype(np.uint8)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -30,6 +32,7 @@ def mask_to_geojson(mask: np.ndarray, offset_x: int = 0, offset_y: int = 0):
                 continue
 
             coords = coords + np.array([offset_x, offset_y])
+            coords[:, 1] = image_height - coords[:, 1]
             coords = coords.tolist()
 
             if coords[0] != coords[-1]:
@@ -41,15 +44,11 @@ def mask_to_geojson(mask: np.ndarray, offset_x: int = 0, offset_y: int = 0):
         return None
 
     if len(polygons) == 1:
-        geojson = {
-            "type": "Polygon",
-            "coordinates": [polygons[0]]
-        }
+        geometry = geojson.Polygon([polygons[0]])
 
     else:
-        geojson = {
-            "type": "MultiPolygon",
-            "coordinates": [[poly] for poly in polygons]
-        }
+        geometry = geojson.MultiPolygon([[poly] for poly in polygons])
 
-    return geojson
+    feature = geojson.Feature(geometry = geometry, properties = {})
+
+    return feature

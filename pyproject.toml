@@ -37,6 +37,7 @@ pydantic = "^2.10.6"
 python-box = "^7.3.2"
 sam2 = "^1.1.0"
 tomli = "^2.2.1"
+geojson = "^3.2.0"
 torch = {version = "2.6.0+cu118", source = "torch-gpu"}
 torchvision = {version = "^0.21.0+cu118", source = "torch-gpu"}
 uvicorn = {extras = ["standard"], version = "^0.34.0"}
@@ -51,7 +52,6 @@ mypy = {extras = ["reports"], version = "^1.7.0"}
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
-dvc = {extras = ["gdrive"], version = "^3.29.0"}
 
 [[tool.poetry.source]]
 name = "torch-gpu"
