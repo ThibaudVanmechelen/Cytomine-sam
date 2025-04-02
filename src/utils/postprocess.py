@@ -1,8 +1,23 @@
 import cv2
 import numpy as np
+from typing import Tuple
 
 
 def post_process_segmentation_mask(mask : np.ndarray, opening_kernel_size : int = 10, closing_kernel_size : int = 20, blur_size : int = 21, do_gaussian_blur : bool = False):
+    """
+    Postprocesses the mask given as input by performing an opening followed by a closing, and optionally, a blur,
+    and finally, filters the resulting mask to keep elements above 10% of the max component in area.
+
+    Args:
+        (mask: np.ndarray): the mask to postprocess.
+        (opening_kernel_size: int): the size of the kernel used for the opening.
+        (closing_kernel_size: int): the size of the kernel used for the closing.
+        (blur_size: int): the size of the kernel used for the Gaussian blur.
+        (do_gaussian_blur: bool): whether to apply Gaussian blur
+
+    Returns:
+        (np.ndarray): Returns the postprocessed mask.
+    """
     if mask.dtype != np.uint8:
         mask = (mask * 255).astype(np.uint8)
 
@@ -21,7 +36,18 @@ def post_process_segmentation_mask(mask : np.ndarray, opening_kernel_size : int 
 
 
 def filter_mask_by_size(mask : np.ndarray, area_thresh_percentage : float = 0.1):
-    """ Function to clean the mask, this function cleans the mask by removing connected area which are less than 10% of the biggest part of the mask """
+    """
+    Filters the mask by area, this function finds the area of the largest component of the mask
+    and removes all the components that are inferior to a certain threshold (percentage) of that area,
+    it enables to remove small noises in the mask.
+
+    Args:
+        (mask: np.ndarray): the mask to filter.
+        (area_thresh_percentage: float): the percentage of the max component under which it removes the small components.
+
+    Returns:
+        (np.ndarray): Returns the filtered mask.
+    """
     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity = 8)
     areas = stats[:, cv2.CC_STAT_AREA]
 
@@ -39,7 +65,18 @@ def filter_mask_by_size(mask : np.ndarray, area_thresh_percentage : float = 0.1)
     return filtered_mask
 
 
-def upscale_mask(mask: np.ndarray, init_shape: tuple):
+def upscale_mask(mask: np.ndarray, init_shape: Tuple[int, int]):
+    """
+    Function to upscale a mask to its initial size, if the mask was not resized (init_shape == (-1, -1)),
+    nothing is done.
+
+    Args:
+        (mask: np.ndarray): the mask to resize.
+        (init_shape: Tuple[int, int]): the original shape of the mask.
+
+    Returns:
+        (np.ndarray): Returns the upscaled (or not) mask.
+    """
     if init_shape[0] == -1 or init_shape[1] == -1:
         return mask
 

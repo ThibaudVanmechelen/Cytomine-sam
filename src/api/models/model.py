@@ -1,47 +1,35 @@
 from pydantic import BaseModel
-from typing import List, Optional, Literal
-from fastapi import Request
+from typing import List, Optional, Dict, Any
 
-class GeoJSONPolygon(BaseModel):
+
+class SegmentationRequest(BaseModel):
     """
+    Class to represent the request for segmentation.
+    Example:
         {
-            "type": "Polygon", 
-            "coordinates": [
-                [
-                    [x1, y1],
-                    [x2, y2],
-                    [x3, y3],
-                    [x4, y4],
-                    [x1, y1]        // this is for a Box
-                ]
+            "image_id": 42,
+            "geometry": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[[10, 10], [20, 10], [20, 20], [10, 20], [10, 10]]]
+                },
+                "properties": {}
+            },
+            "points": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [15, 15]
+                    },
+                    "properties": {
+                        "label": 1
+                    }
+                }
             ]
         }
     """
-    type: Literal["Polygon"]
-    coordinates: List[List[List[int]]]
-
-
-class PointProperties(BaseModel):
-    label: Literal[0, 1]  # 1 = positive, 0 = negative
-
-
-class GeoJsonPoint(BaseModel):
-    """
-        {
-            "type": "Point", 
-            "coordinates": [x, y]
-            "properties": {
-                "label": 1          // 1 for positive point and 0 for negative point
-            }
-        }
-    """
-    type: Literal["Point"]
-    coordinates: List[int]
-    properties: PointProperties
-
-
-class SegmentationFromIdRequest(BaseModel):
-    request: Request
     image_id: int
-    geometry: GeoJSONPolygon
-    points: Optional[List[GeoJsonPoint]] = None # Optional
+    geometry: Dict[str, Any]
+    points: Optional[List[Dict[str, Any]]] = None  # List of GeoJSON Feature that correspond to points.

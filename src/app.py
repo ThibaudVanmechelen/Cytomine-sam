@@ -6,19 +6,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from src import __version__
-from sam2 import SAM2ImagePredictor, build_sam2
-from src.config import Settings, get_settings
 from src.api import prediction
-from src.api import storage
-from src.utils.store_utils import get_redis
-from src.store.store import *
-from apscheduler.schedulers.background import BackgroundScheduler
+from src.config import Settings, get_settings
 
-
-scheduler = BackgroundScheduler()
+from sam2.build_sam import build_sam2
+from sam2.sam2_image_predictor import SAM2ImagePredictor
 
 
 def load_predictor(settings: Settings) -> SAM2ImagePredictor:
+    """Load the weights of the model and creates a new predictor instance."""
     sam2_model = build_sam2(settings.config, settings.checkpoint, device = settings.device)
 
     return SAM2ImagePredictor(sam2_model)
@@ -26,21 +22,15 @@ def load_predictor(settings: Settings) -> SAM2ImagePredictor:
 
 @asynccontextmanager
 async def lifespan(local_app: FastAPI) -> AsyncGenerator[None, None]:
+    """Lifespan of the app."""
+
     local_app.state.predictor = load_predictor(get_settings())
-
-    scheduler.add_job(lambda: cleanup_cached_files(get_redis()), 'interval', minutes = 30)
-    scheduler.start()
-    print("[STARTUP] Predictor loaded and cleanup job scheduled.")
-
     yield
-
-    scheduler.shutdown()
-    print("[SHUTDOWN] Scheduler stopped.")
 
 
 app = FastAPI(
     title = "Cytomine Segment Anything Server",
-    description = "Cytomine Segment Anything HTTP API.",
+    description = "Cytomine Segment Anything Server HTTP API.",
     version = __version__,
     lifespan = lifespan,
     license_info = {
@@ -51,4 +41,3 @@ app = FastAPI(
 )
 
 app.include_router(router = prediction.router, prefix = "/api")
-app.include_router(router = storage.router, prefix = "/api")

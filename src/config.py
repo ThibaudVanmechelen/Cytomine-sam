@@ -2,17 +2,11 @@
 
 import torch
 from pydantic_settings import BaseSettings
-from utils.config import load_config
+from src.utils.box_config import load_config
 
 
 class Settings(BaseSettings):
     """Configurable settings."""
-
-    # Database
-    host: str = "localhost"
-    port: int = 6379
-    db: int = 0
-    ttl: int = 7200
 
     # Deep learning model
     device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -24,4 +18,10 @@ class Settings(BaseSettings):
 
 
 def get_settings() -> Settings:
+    """
+    Get the settings.
+
+    Returns:
+        (Settings): The environment settings.
+    """
     return Settings()

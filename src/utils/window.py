@@ -1,30 +1,31 @@
-import matplotlib.pyplot as plt
-import tempfile
 import os
+import tempfile
+import matplotlib.pyplot as plt
+
 from cytomine.models.image import ImageInstance
-from cytomine import Cytomine
 
-from src.store.store import Store
-from src.config import Settings
 
-def load_cytomine_window_image(obj, x, y, w, h):
+def load_cytomine_window_image(obj: ImageInstance, x: int, y: int, w: int, h: int):
+    """
+    Function to download the cropped part of the original WSI.
+
+    Args:
+        (obj: ImageInstance): the original WSI Image Instance.
+        (x: int): the offset along the x-axis.
+        (y: int): the offset along the y-axis.
+        (w: int): the width of the cropped part.
+        (h: int): the height of the cropped part.
+
+    Returns:
+        (np.ndarray): Returns the cropped part of the image
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = os.path.join(tmpdir, "window.jpg")
+        obj.window(x, y, w, h, dest_pattern = tmp_path)
 
-        window = obj.window(x, y, w, h, dest_pattern = tmp_path)
-        if not window:
-            raise RuntimeError("Failed to fetch image window")
+        try:
+            return plt.imread(tmp_path)
 
-        return plt.imread(tmp_path).copy()
-    
-
-def download_and_cache_image(image_id: int, store: Store, settings: Settings):
-    local_path = f"/tmp/cytomine_{image_id}.jpg"
-
-    with Cytomine(settings.keys["host"], settings.keys["public_key"], settings.keys["private_key"], verbose = False) as cytomine:
-        img = ImageInstance().fetch(image_id)
-        img.download(dest_pattern = local_path, max_size = None)
-
-    store.set(image_id, local_path)
-
-    return local_path
+        except Exception as e:
+            print(f"Failed to read the cropped image: {e}")
+            return None
