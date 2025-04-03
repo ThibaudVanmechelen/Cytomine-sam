@@ -21,6 +21,12 @@ runs:
         python -m pip install --upgrade pip
         python -m pip install poetry
 
+    - name: Free up space on runner
+      shell: bash
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        df -h
+
     - name: Install
       shell: bash
-      run: python -m poetry install --only main,dev,test --without gpu --no-root
+      run: python -m poetry install
