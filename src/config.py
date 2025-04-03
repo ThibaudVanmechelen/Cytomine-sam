@@ -2,6 +2,7 @@
 
 import torch
 from pydantic_settings import BaseSettings
+
 from src.utils.box_config import load_config
 
 
