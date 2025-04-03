@@ -16,6 +16,8 @@ RUN poetry config virtualenvs.create false
 RUN poetry install --no-interaction --no-ansi
 
 COPY src /app/src
+COPY weights /app/weights
+COPY configs /app/configs
 
 EXPOSE 6000
 
