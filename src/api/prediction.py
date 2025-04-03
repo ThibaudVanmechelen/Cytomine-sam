@@ -9,15 +9,15 @@ from cytomine.models import ImageInstance
 
 from src.config import Settings, get_settings
 
-from models.model import SegmentationRequest
-from models.validate import validate_box_feature, validate_point_feature
+from src.api.models.model import SegmentationRequest
+from src.api.models.validate import validate_box_feature, validate_point_feature
 
-from utils.convert_geojson import mask_to_geojson
-from utils.window import load_cytomine_window_image
-from utils.align_prompts import align_box_prompt, align_point_prompt
-from utils.format_prompt import format_point_prompt, format_box_prompt
-from utils.postprocess import post_process_segmentation_mask, upscale_mask
-from utils.extract_img import get_roi_around_annotation, resize_to_max_size
+from src.utils.convert_geojson import mask_to_geojson
+from src.utils.window import load_cytomine_window_image
+from src.utils.align_prompts import align_box_prompt, align_point_prompt
+from src.utils.format_prompt import format_point_prompt, format_box_prompt
+from src.utils.postprocess import post_process_segmentation_mask, upscale_mask
+from src.utils.extract_img import get_roi_around_annotation, resize_to_max_size
 
 
 router = APIRouter()
@@ -43,22 +43,25 @@ async def predict(
     # Check prompt coordinates format
     try:
         validate_box_feature(segmentation_input.geometry)
-        
+
         points_data = segmentation_input.points if segmentation_input.points is not None else []
         for pt in points_data:
             validate_point_feature(pt)
 
-        box_prompt = format_box_prompt(segmentation_input.geometry) # the box has coordinates according to the entire image referential
+        # Box has coordinates according to the entire image referential
+        box_prompt = format_box_prompt(segmentation_input.geometry)
         point_prompt, point_label = format_point_prompt(points_data) # same for the points
 
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        raise HTTPException(status_code = 400, detail = str(e)) from e
 
     except Exception as e:
-        raise HTTPException(status_code = 400, detail = str(e))
+        raise HTTPException(status_code = 400, detail = str(e)) from e
 
     # Extract corresponding part of the image
-    with Cytomine(settings.keys['host'], settings.keys['public_key'], settings.keys['private_key'], verbose = False) as cytomine:
+    with Cytomine(settings.keys['host'], settings.keys['public_key'],
+                  settings.keys['private_key'], verbose = False):
+
         img = ImageInstance().fetch(segmentation_input.image_id)
         x, y, annot_width, annot_height = get_roi_around_annotation(img, box_prompt)
         cropped_img = load_cytomine_window_image(img, x, y, annot_width, annot_height)

@@ -1,3 +1,5 @@
+"""Module to convert a binary mask to a GeoJSON object."""
+
 import cv2
 import geojson
 import numpy as np

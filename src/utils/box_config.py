@@ -1,3 +1,5 @@
+"""Module to handle .toml configs."""
+
 from box import Box
 from tomli import load
 

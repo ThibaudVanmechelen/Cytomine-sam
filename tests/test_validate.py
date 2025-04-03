@@ -1,3 +1,5 @@
+"""Module to test the validate.py file"""
+
 import pytest
 from fastapi import HTTPException
 
@@ -5,6 +7,7 @@ from src.api.models.validate import validate_box_feature, validate_point_feature
 
 
 def test_valid_box():
+    """Test function"""
     feature = {
         "type": "Feature",
         "geometry": {
@@ -16,36 +19,54 @@ def test_valid_box():
     assert validate_box_feature(feature) is None
 
 def test_box_invalid_type():
+    """Test function"""
     feature = {"type": "Invalid", "geometry": {}}
 
     with pytest.raises(HTTPException, match = "Geometry must be a GeoJSON Feature"):
         validate_box_feature(feature)
 
 def test_box_not_polygon():
+    """Test function"""
     feature = {"type": "Feature", "geometry": {"type": "Point"}}
 
     with pytest.raises(HTTPException, match = "Geometry must be a Polygon"):
         validate_box_feature(feature)
 
 def test_box_missing_coordinates():
+    """Test function"""
     feature = {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": []}}
 
     with pytest.raises(HTTPException, match = "Polygon must have coordinates"):
         validate_box_feature(feature)
 
 def test_box_not_closed():
-    feature = {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[1, 1], [4, 1], [4, 3], [1, 3]]]}}
+    """Test function"""
+    feature = {
+        "type": "Feature", 
+        "geometry": {
+            "type": "Polygon", 
+            "coordinates": [[[1, 1], [4, 1], [4, 3], [1, 3]]]
+            }
+    }
 
     with pytest.raises(HTTPException, match = "Box must have 5 coordinates"):
         validate_box_feature(feature)
 
 def test_box_open_shape():
-    feature = {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[1, 1], [4, 1], [4, 3], [1, 3], [2, 2]]]}}
+    """Test function"""
+    feature = {
+        "type": "Feature", 
+        "geometry": {
+            "type": "Polygon", 
+            "coordinates": [[[1, 1], [4, 1], [4, 3], [1, 3], [2, 2]]]
+            }
+    }
 
     with pytest.raises(HTTPException, match = "Box must be closed"):
         validate_box_feature(feature)
 
 def test_box_not_axis_aligned():
+    """Test function"""
     feature = {
         "type": "Feature",
         "geometry": {
@@ -58,6 +79,7 @@ def test_box_not_axis_aligned():
         validate_box_feature(feature)
 
 def test_box_incorrect_rectangle():
+    """Test function"""
     feature = {
         "type": "Feature",
         "geometry": {
@@ -71,6 +93,7 @@ def test_box_incorrect_rectangle():
 
 
 def test_valid_point():
+    """Test function"""
     feature = {
         "type": "Feature",
         "geometry": {"type": "Point", "coordinates": [1, 2]},
@@ -80,31 +103,51 @@ def test_valid_point():
     assert validate_point_feature(feature) is None
 
 def test_point_invalid_type():
+    """Test function"""
     feature = {"type": "Invalid", "geometry": {}}
 
     with pytest.raises(HTTPException, match = "Point must be a GeoJSON Feature"):
         validate_point_feature(feature)
 
 def test_point_wrong_geometry():
+    """Test function"""
     feature = {"type": "Feature", "geometry": {"type": "Polygon"}}
 
     with pytest.raises(HTTPException, match = "Point geometry must be of type Point"):
         validate_point_feature(feature)
 
 def test_point_wrong_coords():
-    feature = {"type": "Feature", "geometry": {"type": "Point", "coordinates": [1]}, "properties": {"label": 0}}
+    """Test function"""
+    feature = {
+        "type": "Feature", 
+        "geometry": {"type": "Point", "coordinates": [1]}, 
+        "properties": {"label": 0}
+    }
 
     with pytest.raises(HTTPException, match = "Point must have exactly 2 coordinates"):
         validate_point_feature(feature)
 
 def test_point_missing_label():
-    feature = {"type": "Feature", "geometry": {"type": "Point", "coordinates": [1, 2]}, "properties": {}}
+    """Test function"""
+    feature = {
+        "type": "Feature", 
+        "geometry": {"type": "Point", "coordinates": [1, 2]}, 
+        "properties": {}
+    }
 
     with pytest.raises(HTTPException, match = "Point must have a 'label' property"):
         validate_point_feature(feature)
 
 def test_point_invalid_label():
-    feature = {"type": "Feature", "geometry": {"type": "Point", "coordinates": [1, 2]}, "properties": {"label": 2}}
+    """Test function"""
+    feature = {
+        "type": "Feature", 
+        "geometry": {"type": "Point", "coordinates": [1, 2]}, 
+        "properties": {"label": 2}
+    }
 
-    with pytest.raises(HTTPException, match = "Point must have a 'label' property with value 0 or 1"):
+    with pytest.raises(
+        HTTPException,
+        match = "Point must have a 'label' property with value 0 or 1"
+    ):
         validate_point_feature(feature)

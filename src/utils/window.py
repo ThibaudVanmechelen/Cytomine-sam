@@ -1,3 +1,5 @@
+"""Module to extract a patch of the original WSI image."""
+
 import os
 import tempfile
 import matplotlib.pyplot as plt

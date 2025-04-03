@@ -1,6 +1,9 @@
+"""Module to compute the patch of the image to extract."""
+
+from math import floor
+
 import cv2
 import numpy as np
-from math import floor
 from cytomine.models import ImageInstance
 
 ZOOM_OUT_FACTOR = 2.0
@@ -76,7 +79,9 @@ def resize_to_max_size(img: np.ndarray):
 
 def get_roi_around_annotation(img : ImageInstance, box: np.ndarray):
     """
-    Function to get the position of the annotation to extract with the top left corner, width and height.
+    Function to get the position of the annotation to extract with the top left corner,
+    width and height.
+
     With this function, the zoom-out factor has been taken into account.
 
     Args:
@@ -93,7 +98,7 @@ def get_roi_around_annotation(img : ImageInstance, box: np.ndarray):
     annotation_width, annotation_height, x, y = get_localisation_of_annotation(box)
     size = get_annotation_size(img.width, img.height, annotation_width, annotation_height)
 
-    h = (size - annotation_width) / 2 
+    h = (size - annotation_width) / 2
     v = (size - annotation_height) / 2
     x = floor(x - h)
     y = floor(img.height - y - v)

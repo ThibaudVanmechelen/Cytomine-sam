@@ -1,5 +1,7 @@
-import numpy as np
+"""Module to format prompt from the GeoJSON format to SAM format."""
+
 from typing import List, Dict, Any
+import numpy as np
 
 
 def format_point_prompt(points_data: List[Dict[str, Any]]):
@@ -19,7 +21,7 @@ def format_point_prompt(points_data: List[Dict[str, Any]]):
 
     try:
         point_coords = np.array(
-            [list(map(int, pt["geometry"]["coordinates"])) for pt in points_data], 
+            [list(map(int, pt["geometry"]["coordinates"])) for pt in points_data],
             dtype = np.int32
         )
 
@@ -29,9 +31,9 @@ def format_point_prompt(points_data: List[Dict[str, Any]]):
         )
 
         return point_coords, point_labels
-    
+
     except Exception as e:
-        raise ValueError(f"Invalid point data format: {e}")
+        raise ValueError(f"Invalid point data format: {e}") from e
 
 
 def format_box_prompt(box: Dict[str, Any]):
@@ -42,7 +44,7 @@ def format_box_prompt(box: Dict[str, Any]):
         (box: Dict[str, Any]): the box prompt.
 
     Returns:
-        (np.ndarray): Returns the formatted box prompt in format [x_min, y_min, x_max, y_max] (int32).
+        (np.ndarray): Returns the formatted box prompt in format [x_min, y_min, x_max, y_max].
     """
     try:
         coordinates = box["geometry"]["coordinates"]
@@ -59,4 +61,4 @@ def format_box_prompt(box: Dict[str, Any]):
         return np.array([x_min, y_min, x_max, y_max], dtype = np.int32)
 
     except Exception as e:
-        raise ValueError(f"Invalid box format: {e}")
+        raise ValueError(f"Invalid box format: {e}") from e
