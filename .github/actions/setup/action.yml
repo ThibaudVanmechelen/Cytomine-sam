@@ -23,4 +23,4 @@ runs:
 
     - name: Install
       shell: bash
-      run: python -m poetry install
+      run: python -m poetry install --only main,dev,test --without gpu --no-root
