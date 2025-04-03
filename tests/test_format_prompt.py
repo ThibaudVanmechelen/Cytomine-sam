@@ -6,7 +6,7 @@ import numpy as np
 from src.utils.format_prompt import format_box_prompt, format_point_prompt
 
 
-def test_format_point_prompt_valid():
+def test_format_point_prompt_valid() -> None:
     """Test function"""
     points = [
         {"geometry": {"coordinates": [5, 10]}, "properties": {"label": 1}},
@@ -22,7 +22,7 @@ def test_format_point_prompt_valid():
     np.testing.assert_array_equal(labels, expected_labels)
 
 
-def test_format_point_prompt_empty():
+def test_format_point_prompt_empty() -> None:
     """Test function"""
     coords, labels = format_point_prompt([])
 
@@ -30,7 +30,7 @@ def test_format_point_prompt_empty():
     assert labels is None
 
 
-def test_format_point_prompt_invalid():
+def test_format_point_prompt_invalid() -> None:
     """Test function"""
     with pytest.raises(ValueError, match = "Invalid point data format"):
         format_point_prompt([
@@ -38,7 +38,7 @@ def test_format_point_prompt_invalid():
         ])
 
 
-def test_format_box_prompt_valid():
+def test_format_box_prompt_valid() -> None:
     """Test function"""
     box = {
         "geometry": {
@@ -53,26 +53,7 @@ def test_format_box_prompt_valid():
     np.testing.assert_array_equal(result, expected)
 
 
-def test_format_box_prompt_missing_coords():
-    """Test function"""
-    box = {"geometry": {"coordinates": []}}
-    assert format_box_prompt(box) is None
-
-
-def test_format_box_prompt_incomplete_box():
-    """Test function"""
-    box = {
-        "geometry": {
-            "coordinates": [
-                [[10, 10], [20, 20]]
-            ]
-        }
-    }
-
-    assert format_box_prompt(box) is None
-
-
-def test_format_box_prompt_invalid_structure():
+def test_format_box_prompt_invalid_structure() -> None:
     """Test function"""
     with pytest.raises(ValueError, match = "Invalid box format"):
         format_box_prompt({"geometry": {}})

@@ -7,7 +7,7 @@ import numpy as np
 
 def post_process_segmentation_mask(mask : np.ndarray, opening_kernel_size : int = 10,
                                    closing_kernel_size : int = 20, blur_size : int = 21,
-                                   do_gaussian_blur : bool = False):
+                                   do_gaussian_blur : bool = False) -> np.ndarray:
     """
     Postprocesses the mask given as input by performing an opening followed by a closing, 
     and optionally, a blur, and finally, filters the resulting mask to keep elements above 
@@ -41,7 +41,7 @@ def post_process_segmentation_mask(mask : np.ndarray, opening_kernel_size : int 
     return temp_mask
 
 
-def filter_mask_by_size(mask : np.ndarray, area_thresh_percentage : float = 0.1):
+def filter_mask_by_size(mask : np.ndarray, area_thresh_percentage : float = 0.1) -> np.ndarray:
     """
     Filters the mask by area, this function finds the area of the largest component of the mask
     and removes all the components that are inferior to a certain threshold (percentage) of 
@@ -72,7 +72,7 @@ def filter_mask_by_size(mask : np.ndarray, area_thresh_percentage : float = 0.1)
     return filtered_mask
 
 
-def upscale_mask(mask: np.ndarray, init_shape: Tuple[int, int]):
+def upscale_mask(mask: np.ndarray, init_shape: Tuple[int, int]) -> np.ndarray:
     """
     Function to upscale a mask to its initial size, if the mask was 
     not resized (init_shape == (-1, -1)), nothing is done.

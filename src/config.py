@@ -1,6 +1,7 @@
 """Environment parameters"""
 
 import torch
+from box import Box
 from pydantic_settings import BaseSettings
 
 from src.utils.box_config import load_config
@@ -15,7 +16,7 @@ class Settings(BaseSettings):
     config: str = "/configs/sam2.1_hiera_b+.yaml"
     checkpoint: str = "/weights/weights.pt"
 
-    keys = load_config('../keys.toml')
+    keys: Box = load_config('../keys.toml')
 
 
 def get_settings() -> Settings:

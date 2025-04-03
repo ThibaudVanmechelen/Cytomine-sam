@@ -1,10 +1,11 @@
 """Module to format prompt from the GeoJSON format to SAM format."""
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union, Tuple
 import numpy as np
 
 
-def format_point_prompt(points_data: List[Dict[str, Any]]):
+def format_point_prompt(points_data: List[Dict[str, Any]]
+                        ) -> Tuple[Union[np.ndarray, None], Union[np.ndarray, None]]:
     """
     Function to format the point prompts from the GeoJSON format to the SAM format.
 
@@ -36,7 +37,7 @@ def format_point_prompt(points_data: List[Dict[str, Any]]):
         raise ValueError(f"Invalid point data format: {e}") from e
 
 
-def format_box_prompt(box: Dict[str, Any]):
+def format_box_prompt(box: Dict[str, Any]) -> np.ndarray:
     """
     Function to format the box prompt from the GeoJSON format to the SAM format.
 
@@ -48,8 +49,6 @@ def format_box_prompt(box: Dict[str, Any]):
     """
     try:
         coordinates = box["geometry"]["coordinates"]
-        if not coordinates or len(coordinates[0]) != 5:
-            return None
 
         coords = np.array(coordinates[0][:4], dtype = np.int32) # to ignore the closing point
 

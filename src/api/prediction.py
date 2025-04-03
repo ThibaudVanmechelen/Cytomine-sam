@@ -28,7 +28,7 @@ async def predict(
         request: Request,
         segmentation_input: SegmentationRequest,
         settings: Settings = Depends(get_settings)
-    ):
+    ) -> JSONResponse:
     """
     Function to handle the segmentation request.
 
@@ -65,11 +65,16 @@ async def predict(
         img = ImageInstance().fetch(segmentation_input.image_id)
         x, y, annot_width, annot_height = get_roi_around_annotation(img, box_prompt)
         cropped_img = load_cytomine_window_image(img, x, y, annot_width, annot_height)
+        if cropped_img is None:
+            raise HTTPException(status_code = 500, detail = "Failed to load image from Cytomine.")
+
         resized_cropped_img, original_dimw, original_dimh = resize_to_max_size(cropped_img)
 
     # Align prompt referential
     box_prompt = align_box_prompt(box_prompt, x, y, original_dimh)
-    point_prompt = align_point_prompt(point_prompt, x, y, original_dimh)
+
+    if point_prompt is not None:
+        point_prompt = align_point_prompt(point_prompt, x, y, original_dimh)
 
     # Predict and post process
     predictor = request.app.state.predictor

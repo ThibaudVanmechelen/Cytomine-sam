@@ -1,11 +1,16 @@
 """Module to convert a binary mask to a GeoJSON object."""
 
+from typing import Union, List, cast
+
 import cv2
 import geojson
 import numpy as np
 
 
-def mask_to_geojson(mask: np.ndarray, image_height: int, offset_x: int, offset_y: int):
+def mask_to_geojson(mask: np.ndarray,
+                    image_height: int,
+                    offset_x: int,
+                    offset_y: int) -> Union[geojson.Feature, None]:
     """
     Function to convert the mask to a GeoJSON taking into account the offset due
     to the manipulation of WSIs.
@@ -25,7 +30,7 @@ def mask_to_geojson(mask: np.ndarray, image_height: int, offset_x: int, offset_y
     if not contours:
         return None
 
-    polygons = []
+    polygons: List[List[List[float]]] = []
     for contour in contours:
         if len(contour) >= 3: # because the polygon must at least have 3 points
             coords = contour.squeeze()
@@ -35,12 +40,13 @@ def mask_to_geojson(mask: np.ndarray, image_height: int, offset_x: int, offset_y
 
             coords = coords + np.array([offset_x, offset_y])
             coords[:, 1] = image_height - coords[:, 1]
-            coords = coords.tolist()
 
-            if coords[0] != coords[-1]:
-                coords.append(coords[0])
+            coords_list = cast(List[List[float]], coords.tolist())
 
-            polygons.append(coords)
+            if coords_list[0] != coords_list[-1]:
+                coords_list.append(coords_list[0])
+
+            polygons.append(coords_list)
 
     if not polygons:
         return None
