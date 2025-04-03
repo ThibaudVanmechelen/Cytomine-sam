@@ -2,7 +2,7 @@ from typing import Dict, Any
 from fastapi import HTTPException
 
 
-def validate_box_feature(feature: Dict[str, Any]):
+def validate_box_feature(feature: Dict[str, Any]) -> None:
     """
     Function to validate a box feature, it ensures that the GeoJSON feature that is received corresponds to a box.
 
@@ -46,7 +46,7 @@ def validate_box_feature(feature: Dict[str, Any]):
         raise HTTPException(400, "Box corners do not form a proper rectangle.")
     
 
-def validate_point_feature(feature: Dict[str, Any]):
+def validate_point_feature(feature: Dict[str, Any]) -> None:
     """
     Function to validate a point feature, it ensures that the GeoJSON feature that is received corresponds to a point.
 

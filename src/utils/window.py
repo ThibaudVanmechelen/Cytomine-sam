@@ -1,11 +1,20 @@
+"""Module to extract a patch of the original WSI image."""
+
 import os
 import tempfile
+from typing import Union
+
+import numpy as np
 import matplotlib.pyplot as plt
 
 from cytomine.models.image import ImageInstance
 
 
-def load_cytomine_window_image(obj: ImageInstance, x: int, y: int, w: int, h: int):
+def load_cytomine_window_image(obj: ImageInstance,
+                               x: int,
+                               y: int,
+                               w: int,
+                               h: int) -> Union[np.ndarray, None]:
     """
     Function to download the cropped part of the original WSI.
 
@@ -26,6 +35,5 @@ def load_cytomine_window_image(obj: ImageInstance, x: int, y: int, w: int, h: in
         try:
             return plt.imread(tmp_path)
 
-        except Exception as e:
-            print(f"Failed to read the cropped image: {e}")
+        except Exception as _:
             return None

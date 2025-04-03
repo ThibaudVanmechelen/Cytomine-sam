@@ -1,8 +1,11 @@
+"""Module to test the align_prompts.py file"""
+
 import numpy as np
 from src.utils.align_prompts import align_box_prompt, align_point_prompt
 
 
-def test_align_box_prompt():
+def test_align_box_prompt() -> None:
+    """Test function"""
     box = np.array([10, 20, 30, 40])
     x_tl, y_tl = 5, 10
     img_height = 100
@@ -13,7 +16,8 @@ def test_align_box_prompt():
     np.testing.assert_array_equal(result, expected)
 
 
-def test_align_point_prompt():
+def test_align_point_prompt() -> None:
+    """Test function"""
     points = np.array([[10, 20], [30, 40]])
     x_tl, y_tl = 5, 10
     img_height = 100

@@ -1,7 +1,9 @@
+"""Module to align the prompts in the new referential."""
+
 import numpy as np
 
 
-def align_box_prompt(box: np.ndarray, x_tl: int, y_tl: int, img_height: int):
+def align_box_prompt(box: np.ndarray, x_tl: int, y_tl: int, img_height: int) -> np.ndarray:
     """
     Function to align the box prompt with the extracted window (the coordinates of the box prompt
     must be relative to the window and not to the WSI, this function performs this transformation).
@@ -28,10 +30,11 @@ def align_box_prompt(box: np.ndarray, x_tl: int, y_tl: int, img_height: int):
     return np.array([new_x_min, new_y_min, new_x_max, new_y_max])
 
 
-def align_point_prompt(points: np.ndarray, x_tl: int, y_tl: int, img_height: int):
+def align_point_prompt(points: np.ndarray, x_tl: int, y_tl: int, img_height: int) -> np.ndarray:
     """
-    Function to align the point prompts with the extracted window (the coordinates of the point prompts
-    must be relative to the window and not to the WSI, this function performs this transformation).
+    Function to align the point prompts with the extracted window (the coordinates of
+    the point promptsmust be relative to the window and not to the WSI, this function
+    performs this transformation).
 
     Args:
         (points: np.ndarray): the point prompts.
