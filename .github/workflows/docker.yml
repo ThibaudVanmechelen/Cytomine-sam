@@ -16,7 +16,12 @@ jobs:
       - name: Free up space on runner
         shell: bash
         run: |
+          echo "Initial space:"
+          df -h
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo docker system prune -af || true
+          sudo rm -rf /var/lib/docker
+          echo "After cleanup:"
           df -h
 
       - name: Release check
