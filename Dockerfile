@@ -9,15 +9,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock README.md /app/
+COPY pyproject.toml poetry.lock README.md ./
+COPY src ./src
 
 RUN poetry config virtualenvs.create false
 
 RUN poetry install --no-interaction --no-ansi
 
-COPY src /app/src
-COPY weights /app/weights
-COPY configs /app/configs
+COPY weights ./weights
+COPY configs ./configs
 
 EXPOSE 6000
 
