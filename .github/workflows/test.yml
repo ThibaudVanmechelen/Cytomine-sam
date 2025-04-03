@@ -21,12 +21,18 @@ jobs:
         with:
           python-version: ${{ vars.PYTHON_VERSION }}
 
+      - name: Free up space on runner
+        shell: bash
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install poetry
           python -m poetry install
-  
+
       - name: Run tests
         run: python -m poetry run coverage run -m pytest
 
