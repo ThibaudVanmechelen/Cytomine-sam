@@ -22,7 +22,7 @@ def mask_to_geojson(mask: np.ndarray,
         (offset_y: int): the offset along the y-axis.
 
     Returns:
-        (geojson.Feature, or None): Returns the structure as a GeoJSON
+        (geojson.Feature, or None): Returns the structure as a GeoJSON.
     """
     mask = (mask > 0).astype(np.uint8)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

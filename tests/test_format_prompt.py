@@ -47,6 +47,7 @@ def test_format_box_prompt_valid() -> None:
             ]
         }
     }
+
     expected = np.array([10, 10, 20, 20], dtype = np.int32)
     result = format_box_prompt(box)
 
