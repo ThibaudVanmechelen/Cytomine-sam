@@ -4,6 +4,7 @@ ENV PATH="/root/.local/bin:$PATH"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl build-essential \
+    libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/* \
     && curl -sSL https://install.python-poetry.org | python3 -
 
@@ -19,6 +20,6 @@ RUN poetry install --no-interaction --no-ansi
 COPY weights ./weights
 COPY configs ./configs
 
-EXPOSE 6000
+EXPOSE 8000
 
-CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "6000"]
+CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
