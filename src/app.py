@@ -9,7 +9,7 @@ from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 
 from src import __version__
-from src.api import prediction
+from src.api import prediction, health
 from src.config import Settings, get_settings
 
 
@@ -41,3 +41,4 @@ app = FastAPI(
 )
 
 app.include_router(router = prediction.router, prefix = "/api")
+app.include_router(router = health.router)
