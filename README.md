@@ -11,6 +11,8 @@ Python 3.12+
 ```bash
 poetry shell
 poetry install
+git lfs install
+git lfs pull
 uvicorn src.app:app --reload
 ```
 
