@@ -13,10 +13,10 @@ class Settings(BaseSettings):
     # Deep learning model
     device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    config: str = "/configs/sam2.1_hiera_b+.yaml"
-    checkpoint: str = "/weights/weights.pt"
+    config: str = "./configs/sam2.1/sam2.1_hiera_b+.yaml"
+    checkpoint: str = "./weights/weights.pt"
 
-    keys: Box = load_config('../keys.toml')
+    keys: Box = load_config('./keys.toml')
 
 
 def get_settings() -> Settings:
