@@ -22,7 +22,7 @@ Note: please ensure that the weights.pt file has indeed been downloaded, so that
 
 ```bash
 docker build -t your-api .
-docker run -v $(pwd)/keys.toml:/app/keys.toml -p 6000:6000 your-api # provide the keys.toml file for cytomine for the api to work
+docker run -v $(pwd)/keys.toml:/app/keys.toml -p 8000:8000 your-api # provide the keys.toml file for cytomine for the api to work
 ```
 
 ## Keys.toml format
