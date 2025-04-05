@@ -3,7 +3,6 @@
 from math import floor
 from typing import Tuple
 
-import cv2
 import numpy as np
 from cytomine.models import ImageInstance
 
@@ -47,35 +46,6 @@ def get_annotation_size(img_width: int, img_height: int, width: int, height: int
     annotation_size = max(width, height)
 
     return min(floor(annotation_size * ZOOM_OUT_FACTOR), img_width, img_height)
-
-
-def resize_to_max_size(img: np.ndarray) -> Tuple[np.ndarray, int, int]:
-    """
-    Function to resize the image so that both its dimensions as less or equal to max_size.
-
-    Args:
-        (img: np.ndarray): the image.
-        (max_size: int): the maximum size of the largest dimension of the image.
-
-    Returns:
-        Tuple of:
-            - (np.ndarray): the resized image.
-            - (int): original width.
-            - (int): original height.
-    """
-    height, width = img.shape[:2]
-    max_original = max(width, height)
-
-    if max_original <= MAX_SIZE:
-        return img, -1, -1
-
-    scale = MAX_SIZE / max_original
-    new_width = int(width * scale)
-    new_height = int(height * scale)
-
-    resized_img = cv2.resize(img, (new_width, new_height), interpolation = cv2.INTER_AREA)
-
-    return resized_img, width, height
 
 
 def get_roi_around_annotation(img : ImageInstance, box: np.ndarray) -> Tuple[int, int, int, int]:
