@@ -33,7 +33,7 @@ def load_cytomine_window_image(obj: ImageInstance,
         obj.window(x, y, w, h, dest_pattern = tmp_path)
 
         try:
-            return plt.imread(tmp_path)
+            return plt.imread(tmp_path).copy()
 
         except Exception as _:
             return None
