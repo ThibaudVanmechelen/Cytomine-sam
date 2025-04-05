@@ -16,8 +16,8 @@ from src.utils.convert_geojson import mask_to_geojson
 from src.utils.window import load_cytomine_window_image
 from src.utils.align_prompts import align_box_prompt, align_point_prompt
 from src.utils.format_prompt import format_point_prompt, format_box_prompt
-from src.utils.postprocess import post_process_segmentation_mask, upscale_mask
-from src.utils.extract_img import get_roi_around_annotation, resize_to_max_size
+from src.utils.postprocess import post_process_segmentation_mask
+from src.utils.extract_img import get_roi_around_annotation
 
 
 router = APIRouter()
@@ -63,22 +63,23 @@ async def predict(
                   settings.keys['private_key'], verbose = False):
 
         img = ImageInstance().fetch(segmentation_input.image_id)
+        img_height = img.height
+
         x, y, annot_width, annot_height = get_roi_around_annotation(img, box_prompt)
+
         cropped_img = load_cytomine_window_image(img, x, y, annot_width, annot_height)
         if cropped_img is None:
             raise HTTPException(status_code = 500, detail = "Failed to load image from Cytomine.")
 
-        resized_cropped_img, original_dimw, original_dimh = resize_to_max_size(cropped_img)
-
     # Align prompt referential
-    box_prompt = align_box_prompt(box_prompt, x, y, original_dimh)
+    box_prompt = align_box_prompt(box_prompt, x, y, img_height)
 
     if point_prompt is not None:
-        point_prompt = align_point_prompt(point_prompt, x, y, original_dimh)
+        point_prompt = align_point_prompt(point_prompt, x, y, img_height)
 
     # Predict and post process
     predictor = request.app.state.predictor
-    predictor.set_image(resized_cropped_img)
+    predictor.set_image(cropped_img)
 
     masks, ious, _ = predictor.predict(
         point_coords = point_prompt,
@@ -91,13 +92,10 @@ async def predict(
     )
 
     best_mask = masks[np.argmax(ious)] # shape: H x W
-    post_processed_mask = post_process_segmentation_mask(best_mask)
-
-    # Resize the output if needed
-    output_mask = upscale_mask(post_processed_mask, (original_dimh, original_dimw))
+    output_mask = post_process_segmentation_mask(best_mask)
 
     # Format output
-    geojson_mask = mask_to_geojson(output_mask, original_dimh, x, y)
+    geojson_mask = mask_to_geojson(output_mask, img_height, x, y)
 
     if not geojson_mask:
         return JSONResponse(status_code = 204, content = {"message": "No geometry found"})

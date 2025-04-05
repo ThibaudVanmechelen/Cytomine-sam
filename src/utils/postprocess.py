@@ -1,6 +1,5 @@
 """Module to postprocess the mask from SAM."""
 
-from typing import Tuple
 import cv2
 import numpy as np
 
@@ -70,22 +69,3 @@ def filter_mask_by_size(mask : np.ndarray, area_thresh_percentage : float = 0.1)
             filtered_mask[labels == label] = 255
 
     return filtered_mask
-
-
-def upscale_mask(mask: np.ndarray, init_shape: Tuple[int, int]) -> np.ndarray:
-    """
-    Function to upscale a mask to its initial size, if the mask was 
-    not resized (init_shape == (-1, -1)), nothing is done.
-
-    Args:
-        (mask: np.ndarray): the mask to resize.
-        (init_shape: Tuple[int, int]): the original shape of the mask.
-
-    Returns:
-        (np.ndarray): Returns the upscaled (or not) mask.
-    """
-    if init_shape[0] == -1 or init_shape[1] == -1:
-        return mask
-
-    # init_shape: (width, height)
-    return cv2.resize(mask, (init_shape[1], init_shape[0]), interpolation = cv2.INTER_NEAREST)
