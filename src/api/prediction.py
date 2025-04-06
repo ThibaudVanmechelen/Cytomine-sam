@@ -5,6 +5,8 @@ from typing import Dict, Any, List, Optional, Union
 import geojson
 import numpy as np
 
+from shapely.geometry import shape
+
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -22,7 +24,13 @@ from src.utils.align_prompts import align_box_prompt, align_point_prompt
 from src.utils.format_prompt import format_point_prompt, format_box_prompt
 from src.utils.postprocess import post_process_segmentation_mask
 from src.utils.extract_img import get_roi_around_annotation
-from src.utils.annotations import fetch_included_annotations
+
+from src.utils.annotations import (
+    fetch_included_annotations,
+    get_annotation_by_id,
+    get_bbox_from_annotation,
+    update_annotation_location
+)
 
 
 router = APIRouter()
@@ -87,10 +95,11 @@ async def smart_predict(
     try:
         validate_box_feature(segmentation_input.geometry)
 
+        geom = shape(segmentation_input.geometry["geometry"])
         points = fetch_included_annotations(
             image_id = segmentation_input.image_id,
             user_id = segmentation_input.user_id,
-            geometry = segmentation_input.geometry,
+            box_ = geom,
             settings = settings
         )
 
@@ -111,12 +120,78 @@ async def smart_predict(
     return JSONResponse(content = result)
 
 
+@router.post("/autonomous_prediction")
+async def autonomous_predict(
+        request: Request,
+        annotation_id: int,
+        settings: Settings = Depends(get_settings)
+    ) -> JSONResponse:
+    """
+    Function to handle the segmentation request, but here the API only needs the
+    'annotation_id' and handles by itself the direct modification of the annotation.
+
+    Args:
+        (request: Request): the HTTP request.
+        (annotation_id: int): the annotation id.
+        (settings: Settings): the settings.
+
+    Returns:
+        (JSONResponse): the JSON response containing the HTTP code.
+    """
+    # Check prompt coordinates format
+    try:
+        annotation = get_annotation_by_id(annotation_id, settings)
+
+        user_id = annotation.user
+        image_id = annotation.image
+
+        bbox = get_bbox_from_annotation(annotation.location)
+
+        points = fetch_included_annotations(
+            image_id = image_id,
+            user_id = user_id,
+            box_ = bbox,
+            settings = settings
+        )
+
+        result = run_segmentation_pipeline(
+            request = request,
+            image_id = image_id,
+            geometry = {"box": bbox},
+            points = points if points else None,
+            settings = settings,
+            is_shapely_box = True
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code = 400, detail = str(e)) from e
+
+    if not result:
+        return JSONResponse(status_code = 204, content = {"message": "No geometry found"})
+
+    try:
+        is_update_ok = update_annotation_location(
+            annotation_id = annotation_id,
+            new_location = result,
+            settings = settings
+        )
+
+        if is_update_ok is False:
+            raise HTTPException(status_code = 400, detail = "Failed to update annotation location.")
+
+    except Exception as e:
+        raise HTTPException(status_code = 400, detail = str(e)) from e
+
+    return JSONResponse(status_code = 200, content = {"message": "Change completed successfully."})
+
+
 def run_segmentation_pipeline(
         request: Request,
         image_id: int,
         geometry: Dict[str, Any],
         points: Optional[List[Dict[str, Any]]],
-        settings: Settings
+        settings: Settings,
+        is_shapely_box: bool = False
     ) -> Union[geojson.Feature, None]:
     """
     Function to run the segmentation model for the incoming request and its prompts.
@@ -127,18 +202,27 @@ def run_segmentation_pipeline(
         (geometry: Dict[str, Any]): the box geometry for this image.
         (points: Optional[List[Dict[str, Any]]]): the additional (optional) point prompts.
         (settings: Settings): the settings.
+        (is_shapely_box: bool): boolean that tells if the geometry is already a box from shapely.
+                                This is a 'trick' to reuse the same code for the autonomous request,
+                                because it uses shapely boxes, and those do not need to be validated
+                                or formatted.
 
     Returns:
         (geojson.Feature, or None): Returns the structure as a GeoJSON.
     """
-    validate_box_feature(geometry)
+    if is_shapely_box is False:
+        validate_box_feature(geometry)
 
     points_data = points if points is not None else []
     for pt in points_data:
         validate_point_feature(pt)
 
     # Box has coordinates according to the entire image referential
-    box_prompt = format_box_prompt(geometry)
+    if is_shapely_box is False:
+        box_prompt = format_box_prompt(geometry)
+    else:
+        box_prompt = np.array(geometry["box"].bounds, dtype = np.int32)
+
     point_prompt, point_label = format_point_prompt(points_data) # same for the points
 
     # Extract corresponding part of the image

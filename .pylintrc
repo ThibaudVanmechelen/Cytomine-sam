@@ -441,7 +441,10 @@ disable=raw-checker-failed,
         no-member,
         broad-exception-caught,
         too-many-locals,
-        duplicate-code
+        duplicate-code,
+        W0511,
+        too-many-arguments, 
+        too-many-positional-arguments
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
