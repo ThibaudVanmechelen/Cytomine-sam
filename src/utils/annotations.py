@@ -2,17 +2,19 @@
 
 from typing import List, Dict, Any
 
+import geojson
+
 from shapely import wkt
-from shapely.geometry import Point, Polygon, shape
+from shapely.geometry import Point, Polygon, box, shape
 
 from cytomine import Cytomine
-from cytomine.models import AnnotationCollection
+from cytomine.models import AnnotationCollection, Annotation
 
 from src.config import Settings
 
 
 def filter_point_annotations_within_polygon(
-        box: Polygon,
+        box_: Polygon,
         annotations: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
     """
@@ -28,14 +30,14 @@ def filter_point_annotations_within_polygon(
     """
     return [
         ann for ann in annotations
-        if isinstance(ann["geometry"], Point) and box.contains(ann["geometry"])
+        if isinstance(ann["geometry"], Point) and box_.contains(ann["geometry"])
     ]
 
 
 def fetch_included_annotations(
         image_id: int,
         user_id: int,
-        geometry: Dict[str, Any],
+        box_: Polygon,
         settings: Settings,
         delete_annotations: bool = True
     ) -> List[Dict[str, Any]]:
@@ -47,16 +49,14 @@ def fetch_included_annotations(
 
     Args:
         (image_id: int): the id of the image to fetch the annotations from.
-        (user_id: int): the id of the user from whom annotations are fetched.
-        (geometry: Dict[str, Any]): the box geometry for this image.
+        (user_id: int): the id of the user whom annotations are fetched.
+        (box_: Polygon): the box geometry for this image.
         (settings: Settings): the settings.
         (delete_annotations: bool): whether to delete the point annotations afterwards.
 
     Returns:
         (List[Dict[str, Any]]): Returns the point prompts formatted as GeoJSON.
     """
-    box = shape(geometry["geometry"])
-
     with Cytomine(settings.keys['host'], settings.keys['public_key'],
                   settings.keys['private_key'], verbose = False):
 
@@ -76,7 +76,7 @@ def fetch_included_annotations(
                 "geometry": annotation_geometry
             })
 
-        filtered_annotation_list = filter_point_annotations_within_polygon(box, annotation_list)
+        filtered_annotation_list = filter_point_annotations_within_polygon(box_, annotation_list)
         annotation_id_list = [ann["id"] for ann in filtered_annotation_list]
 
         if delete_annotations:
@@ -115,3 +115,77 @@ def annotations_to_geojson_features(annotations: List[Dict[str, Any]]) -> List[D
             })
 
     return features
+
+
+def get_annotation_by_id(annotation_id: int, settings: Settings) -> Annotation:
+    """
+    Function to get an annotation by its id.
+
+    Args:
+        (annotation_id: int): the id of the annotation to fetch.
+        (settings: Settings): the settings.
+
+    Returns:
+        (Annotation): Returns the annotation.
+    """
+    with Cytomine(settings.keys['host'], settings.keys['public_key'],
+                  settings.keys['private_key'], verbose = False):
+
+        annotation = Annotation()
+        annotation.id = annotation_id
+
+        annotation.fetch()
+
+    return annotation
+
+
+def get_bbox_from_annotation(location: str) -> Polygon:
+    """
+    Function to get a bounding box around the annotation.
+
+    Args:
+        (location: str): the geometry of the annotation, as a string.
+
+    Returns:
+        (Polygon): Returns the bounding box.
+    """
+    geometry = wkt.loads(location)
+    bbox = box(*geometry.bounds) # TODO maybe order the geometry ? maybe to int also ???
+
+    return bbox
+
+
+def update_annotation_location(
+        annotation_id: int,
+        new_location: geojson.Feature,
+        settings: Settings
+    ) -> bool:
+    """
+    Function to update the location of an annotation.
+
+    Args:
+        (annotation_id: int): the id of the annotation to fetch.
+        (new_location: geojson.Feature): the new location.
+        (settings: Settings): the settings.
+
+    Returns:
+        (bool): Returns the status of the update (True = ok).
+    """
+    shapely_geometry = shape(new_location.geometry)
+    new_location_wkt = shapely_geometry.wkt
+
+    with Cytomine(settings.keys['host'], settings.keys['public_key'],
+                  settings.keys['private_key'], verbose = False):
+
+        annotation = Annotation()
+        annotation.id = annotation_id
+
+        annotation.fetch()
+
+        annotation.location = new_location_wkt
+        update_status = annotation.update()
+
+        if update_status is False:
+            return False
+
+        return True
