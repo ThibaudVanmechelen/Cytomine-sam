@@ -16,7 +16,12 @@ mock_requests = [
 
 responses = []
 for i, payload in enumerate(mock_requests):
-    response = httpx.post(URL, json = payload, timeout = 30.0)
+    response = httpx.post(
+        URL,
+        params = payload,
+        timeout = 30.0
+    )
+
     print(f"Response for request {i + 1}: {response.status_code}")
     print(response.json())
 
