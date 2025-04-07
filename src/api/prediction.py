@@ -22,7 +22,7 @@ from src.utils.convert_geojson import mask_to_geojson
 from src.utils.window import load_cytomine_window_image
 from src.utils.align_prompts import align_box_prompt, align_point_prompt
 from src.utils.format_prompt import format_point_prompt, format_box_prompt
-from src.utils.postprocess import post_process_segmentation_mask
+from src.utils.postprocess import post_process_segmentation_mask, resize_segmentation_mask
 from src.utils.extract_img import get_roi_around_annotation
 
 from src.utils.annotations import (
@@ -31,6 +31,9 @@ from src.utils.annotations import (
     get_bbox_from_annotation,
     update_annotation_location
 )
+
+
+MAX_DIM = 10000
 
 
 router = APIRouter()
@@ -53,7 +56,6 @@ async def predict(
     Returns:
         (JSONResponse): the JSON response containing the new GeoJSON annotation.
     """
-    # Check prompt coordinates format
     try:
         result = run_segmentation_pipeline(
             request = request,
@@ -91,7 +93,6 @@ async def smart_predict(
     Returns:
         (JSONResponse): the JSON response containing the new GeoJSON annotation.
     """
-    # Check prompt coordinates format
     try:
         validate_box_feature(segmentation_input.geometry)
 
@@ -210,6 +211,7 @@ def run_segmentation_pipeline(
     Returns:
         (geojson.Feature, or None): Returns the structure as a GeoJSON.
     """
+    # Check prompt coordinates format
     if is_shapely_box is False:
         validate_box_feature(geometry)
 
@@ -234,15 +236,29 @@ def run_segmentation_pipeline(
 
         x, y, annot_width, annot_height = get_roi_around_annotation(img, box_prompt)
 
-        cropped_img = load_cytomine_window_image(img, x, y, annot_width, annot_height)
+        scale_x = 1.0
+        scale_y = 1.0
+        max_size = None
+
+        if annot_width > MAX_DIM: # annot_width == annot_height
+            # if a dim is greater than 20000, img.window might return an error
+            # handle this situation by constraining the max_size to MAX_DIM (=10000)
+            scale = annot_width / MAX_DIM
+
+            scale_x /= scale
+            scale_y /= scale
+
+            max_size = MAX_DIM
+
+        cropped_img = load_cytomine_window_image(img, x, y, annot_width, annot_height, max_size)
         if cropped_img is None:
             raise HTTPException(status_code = 500, detail = "Failed to load image from Cytomine.")
 
     # Align prompt referential
-    box_prompt = align_box_prompt(box_prompt, x, y, img_height)
+    box_prompt = align_box_prompt(box_prompt, x, y, img_height, scale_x, scale_y)
 
     if point_prompt is not None:
-        point_prompt = align_point_prompt(point_prompt, x, y, img_height)
+        point_prompt = align_point_prompt(point_prompt, x, y, img_height, scale_x, scale_y)
 
     # Predict and post process
     predictor = request.app.state.predictor
@@ -260,6 +276,9 @@ def run_segmentation_pipeline(
 
     best_mask = masks[np.argmax(ious)] # shape: H x W
     output_mask = post_process_segmentation_mask(best_mask)
+
+    if max_size is not None:
+        output_mask = resize_segmentation_mask(output_mask, annot_width, annot_height)
 
     # Format output
     geojson_mask = mask_to_geojson(output_mask, img_height, x, y)

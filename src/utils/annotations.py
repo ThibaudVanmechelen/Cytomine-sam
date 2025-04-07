@@ -150,7 +150,7 @@ def get_bbox_from_annotation(location: str) -> Polygon:
         (Polygon): Returns the bounding box.
     """
     geometry = wkt.loads(location)
-    bbox = box(*geometry.bounds) # TODO maybe order the geometry ? maybe to int also ???
+    bbox = box(*geometry.bounds)
 
     return bbox
 
