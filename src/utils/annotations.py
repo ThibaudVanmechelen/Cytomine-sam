@@ -65,6 +65,7 @@ def fetch_included_annotations(
         annotations.user = user_id
         annotations.showWKT = True
         annotations.showMeta = True
+        annotations.showGIS = True
 
         annotations.fetch()
 
@@ -189,3 +190,26 @@ def update_annotation_location(
             return False
 
         return True
+
+
+def is_invalid_annotation(ann: Annotation) -> bool:
+    """
+    Function to tell if an annotation is invalid to process or
+    not. 
+
+    Points are invalid to process because they do not have a bounding
+    box, any other annotation with no area or no perimeter is also
+    invalid.
+
+    Args:
+        (ann: Annotation): the annotation to process.
+
+    Returns:
+        (bool): Returns a boolean telling if the annotation is invalid.
+    """
+    geom = wkt.loads(ann.location)
+
+    if isinstance(geom, Point) or ann.area == 0.0 or ann.perimeter == 0.0:
+        return True
+
+    return False
