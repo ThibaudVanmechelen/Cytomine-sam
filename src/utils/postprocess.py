@@ -69,21 +69,3 @@ def filter_mask_by_size(mask : np.ndarray, area_thresh_percentage : float = 0.1)
             filtered_mask[labels == label] = 255
 
     return filtered_mask
-
-
-def resize_segmentation_mask(mask: np.ndarray, new_width: int, new_height: int) -> np.ndarray:
-    """
-    Resizes the binary segmentation mask to match the original annotation dimensions.
-
-    Args:
-        (mask: np.ndarray): the mask to resize.
-        (target_width: int): the width of the original region.
-        (target_height: int): the height of the original region.
-
-    Returns:
-        (np.ndarray): Resized binary mask.
-    """
-    resized = cv2.resize(mask.astype(np.uint8), (new_width, new_height),
-                         interpolation = cv2.INTER_NEAREST)
-
-    return (resized > 0).astype(np.uint8)

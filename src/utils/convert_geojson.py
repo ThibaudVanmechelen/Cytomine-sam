@@ -10,7 +10,9 @@ import numpy as np
 def mask_to_geojson(mask: np.ndarray,
                     image_height: int,
                     offset_x: int,
-                    offset_y: int) -> Union[geojson.Feature, None]:
+                    offset_y: int,
+                    scale_x: float = 1.0,
+                    scale_y: float = 1.0) -> Union[geojson.Feature, None]:
     """
     Function to convert the mask to a GeoJSON taking into account the offset due
     to the manipulation of WSIs.
@@ -20,6 +22,8 @@ def mask_to_geojson(mask: np.ndarray,
         (image_height: int): the height of the image.
         (offset_x: int): the offset along the x-axis.
         (offset_y: int): the offset along the y-axis.
+        (scale_x: float): the scaling factor to apply to x coordinates.
+        (scale_y: float): the scaling factor to apply to y coordinates.
 
     Returns:
         (geojson.Feature, or None): Returns the structure as a GeoJSON.
@@ -33,10 +37,13 @@ def mask_to_geojson(mask: np.ndarray,
     polygons: List[List[List[float]]] = []
     for contour in contours:
         if len(contour) >= 3: # because the polygon must at least have 3 points
-            coords = contour.squeeze()
+            coords = contour.squeeze().astype(np.float32)
 
             if coords.ndim != 2:
                 continue
+
+            coords[:, 0] /= scale_x
+            coords[:, 1] /= scale_y
 
             coords = coords + np.array([offset_x, offset_y])
             coords[:, 1] = image_height - coords[:, 1]
