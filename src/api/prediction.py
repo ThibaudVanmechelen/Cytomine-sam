@@ -29,7 +29,8 @@ from src.utils.annotations import (
     fetch_included_annotations,
     get_annotation_by_id,
     get_bbox_from_annotation,
-    update_annotation_location
+    update_annotation_location,
+    is_invalid_annotation
 )
 
 
@@ -142,6 +143,12 @@ async def autonomous_predict(
     # Check prompt coordinates format
     try:
         annotation = get_annotation_by_id(annotation_id, settings)
+
+        if is_invalid_annotation(annotation):
+            raise HTTPException(
+                status_code = 400,
+                detail = "The annotation can not be a Point, or have perimeter/area = 0.0 !"
+            )
 
         user_id = annotation.user
         image_id = annotation.image
