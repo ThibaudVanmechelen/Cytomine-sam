@@ -22,7 +22,7 @@ from src.utils.convert_geojson import mask_to_geojson
 from src.utils.window import load_cytomine_window_image
 from src.utils.align_prompts import align_box_prompt, align_point_prompt
 from src.utils.format_prompt import format_point_prompt, format_box_prompt
-from src.utils.postprocess import post_process_segmentation_mask, resize_segmentation_mask
+from src.utils.postprocess import post_process_segmentation_mask
 from src.utils.extract_img import get_roi_around_annotation
 
 from src.utils.annotations import (
@@ -34,7 +34,7 @@ from src.utils.annotations import (
 )
 
 
-MAX_DIM = 10000
+MAX_DIM = 8000
 
 
 router = APIRouter()
@@ -249,7 +249,7 @@ def run_segmentation_pipeline(
 
         if annot_width > MAX_DIM: # annot_width == annot_height
             # if a dim is greater than 20000, img.window might return an error
-            # handle this situation by constraining the max_size to MAX_DIM (=10000)
+            # handle this situation by constraining the max_size to MAX_DIM
             scale = annot_width / MAX_DIM
 
             scale_x /= scale
@@ -284,10 +284,18 @@ def run_segmentation_pipeline(
     best_mask = masks[np.argmax(ious)] # shape: H x W
     output_mask = post_process_segmentation_mask(best_mask)
 
-    if max_size is not None:
-        output_mask = resize_segmentation_mask(output_mask, annot_width, annot_height)
-
     # Format output
-    geojson_mask = mask_to_geojson(output_mask, img_height, x, y)
+    if max_size is None:
+        geojson_mask = mask_to_geojson(output_mask, img_height, x, y)
+
+    else:
+        geojson_mask = mask_to_geojson(
+            mask = output_mask,
+            image_height = img_height,
+            offset_x = x,
+            offset_y = y,
+            scale_x = scale_x,
+            scale_y = scale_y
+        )
 
     return geojson_mask
