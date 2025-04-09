@@ -1,25 +1,31 @@
-FROM python:3.12-slim
-
-ENV PATH="/root/.local/bin:$PATH"
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git curl build-essential \
-    libgl1 libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -sSL https://install.python-poetry.org | python3 -
+# === BUILD STAGE ===
+FROM python:3.12-slim as builder
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock README.md ./
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libgl1 libglib2.0-0 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
+RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
+
+COPY src ./src    
+
+# === FINAL STAGE ===
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 libglib2.0-0 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /install /usr/local
+
 COPY src ./src
-
-RUN poetry config virtualenvs.create false
-
-RUN poetry install --no-interaction --no-ansi
-
 COPY weights ./weights
 COPY configs ./configs
 
 EXPOSE 8000
-
 CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]

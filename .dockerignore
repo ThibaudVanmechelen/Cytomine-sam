@@ -1,0 +1,30 @@
+# Bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Poetry virtualenv
+.venv/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Git and IDE/editor files
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Test files and reports
+tests/
+*.log
+coverage.*
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Ignore README if not needed in container
+README.md
