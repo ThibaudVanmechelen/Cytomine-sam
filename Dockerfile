@@ -1,5 +1,5 @@
 # === BUILD STAGE ===
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
