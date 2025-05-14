@@ -27,6 +27,7 @@ async def lifespan(local_app: FastAPI) -> AsyncGenerator[None, None]:
     local_app.state.predictor = load_predictor(get_settings())
     yield
 
+prefix = get_settings().api_base_path
 
 app = FastAPI(
     title = "Cytomine Segment Anything Server",
@@ -40,5 +41,5 @@ app = FastAPI(
     },
 )
 
-app.include_router(router = prediction.router, prefix = "/api")
+app.include_router(router = prediction.router, prefix = prefix)
 app.include_router(router = health.router)

@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     config: str = "./configs/sam2.1/sam2.1_hiera_b+.yaml"
     checkpoint: str = "./weights/weights.pt"
 
+    api_base_path: str = "/api"
+
     keys: Box = load_config('./keys.toml')
 
 
