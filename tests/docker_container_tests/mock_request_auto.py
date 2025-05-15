@@ -3,7 +3,7 @@ import json
 import httpx
 
 
-URL = "http://localhost:8000/api/autonomous_prediction"
+URL = "http://localhost:6000/api/autonomous_prediction"
 
 mock_requests = [
     {
