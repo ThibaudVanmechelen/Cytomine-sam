@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 import geojson
 
 from shapely import wkt
-from shapely.geometry import Point, Polygon, box, shape
+from shapely.geometry import Point, Polygon, LineString, LinearRing, box, shape
 
 from cytomine import Cytomine
 from cytomine.models import AnnotationCollection, Annotation
@@ -209,7 +209,7 @@ def is_invalid_annotation(ann: Annotation) -> bool:
     """
     geom = wkt.loads(ann.location)
 
-    if isinstance(geom, Point) or ann.area == 0.0 or ann.perimeter == 0.0:
+    if isinstance(geom, Point) or isinstance(geom, LineString) or isinstance(geom, LinearRing) or ann.area == 0.0 or ann.perimeter == 0.0:
         return True
 
     return False
