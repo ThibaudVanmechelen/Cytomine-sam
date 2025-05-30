@@ -7,10 +7,7 @@ URL = "http://localhost:6000/api/autonomous_prediction"
 
 mock_requests = [
     {
-        "annotation_id": 27663330
-    },
-    {
-        "annotation_id": 27663330
+        "annotation_id": 566188354
     }
 ]
 
