@@ -147,7 +147,7 @@ async def autonomous_predict(
         if is_invalid_annotation(annotation):
             raise HTTPException(
                 status_code = 400,
-                detail = "The annotation can not be a Point, or have perimeter/area = 0.0 !"
+                detail = "The annotation can not be a Point, LineString, LinearRing, or have perimeter/area = 0.0 !"
             )
 
         user_id = annotation.user
