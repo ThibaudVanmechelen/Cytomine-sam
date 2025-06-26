@@ -2,7 +2,7 @@ import os
 import urllib.request
 
 WEIGHTS = {
-    "weights.pt": "https://github.com/ThibaudVanmechelen/Cytomine-sam/blob/main/weights/weights.pt"
+    "weights.pt": "https://huggingface.co/TVM13/Cytomine-sam/resolve/main/weights.pt"
 }
 
 os.makedirs("weights", exist_ok = True)
